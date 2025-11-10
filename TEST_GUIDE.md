@@ -9,8 +9,6 @@ This document explains how to test the core functionality of the **queueCTL** jo
 
 https://drive.google.com/file/d/1BDtfBttOlJePJ-2eKspyytyHWlDZDAb0/view?usp=sharing
 
----
-
 
 ---
 
