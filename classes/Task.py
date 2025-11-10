@@ -64,17 +64,16 @@ class Task:
             
             print(f"task {self.id} encountered exception \"{e}\"\n remaining attempts = {self.max_retries - self.attempts}")
 
-            if self.attempts >= self.max_retries:
+            if self.state == "dead":
                 print(f"task {self.id} is dead, moving to dead-letter-queue")
 
         finally:
             self.updated_at = datetime.datetime.now()
             if self.state == "failed":
                 CONFIG = load_config()
-                base = CONFIG["backoff_base"]
+                base = CONFIG.get("backoff_base", 2)
                 self.next_attempt_at = datetime.datetime.now() + datetime.timedelta(seconds=(base ** self.attempts))
-
-        
+        #print(self.state)
         return self.state
             
 

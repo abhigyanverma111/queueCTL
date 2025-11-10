@@ -4,6 +4,7 @@ import os
 import threading
 import datetime
 from time import sleep
+import uuid
 
 
 from classes.TaskQueue import TaskQueue
@@ -15,6 +16,9 @@ CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config.json")
 # active worker threads
 active_workers = []
 stop_signal = threading.Event()
+
+queue = TaskQueue.instance()
+queue._start_retry_monitor()
 
 
 
@@ -35,7 +39,7 @@ def save_config(config):
 def handle_enqueue(args):
     try:
         job_data = json.loads(args.job_json)
-        job_id = job_data["id"]
+        job_id = str(uuid.uuid4())
         command = job_data["command"]
 
         config = load_config()
@@ -165,7 +169,7 @@ def main():
 
     # Enqueue
     enqueue_parser = subparsers.add_parser("enqueue", help="Add a new job to the queue")
-    enqueue_parser.add_argument("job_json", help="Job JSON string, e.g. '{\"id\":\"job1\",\"command\":\"sleep 2\"}'")
+    enqueue_parser.add_argument("job_json", help="Job JSON string, e.g. '{\"command\":\"sleep 2\"}'")
     enqueue_parser.set_defaults(func=handle_enqueue)
 
     # Worker

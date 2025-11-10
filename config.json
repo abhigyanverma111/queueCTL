@@ -1,5 +1,5 @@
 {
     "max_retries": 5,
-    "backoff_base": 2,
+    "backoff_base": 1,
     "db_path": "queuectl.db"
 }

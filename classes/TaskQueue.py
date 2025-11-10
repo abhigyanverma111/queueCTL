@@ -44,7 +44,7 @@ class TaskQueue:
         with self.lock:
             cursor = self.conn.cursor()
             cursor.execute('''
-                SELECT id, command, max_retries, attempts FROM task_list
+                SELECT id, command, max_retries, attempts, next_attempt_at FROM task_list
                 WHERE state = 'pending'
                 ORDER BY created_at ASC
                 LIMIT 1
@@ -53,7 +53,7 @@ class TaskQueue:
             if not row:
                 return None
             
-            task_id, command, max_retries, attempts = row
+            task_id, command, max_retries, attempts, next_attempt_at = row
             cursor.execute('''
                 UPDATE task_list
                 SET state = 'running', updated_at = ?
@@ -61,7 +61,11 @@ class TaskQueue:
             ''', (datetime.now().isoformat(), task_id))
             self.conn.commit()
         
-        return Task(task_id, command, max_retries)
+        task = Task(task_id, command, max_retries)
+        task.attempts = attempts                  
+        task.next_attempt_at = next_attempt_at    
+        return task
+
     
     def recieve_task(self, task):
 
@@ -91,13 +95,13 @@ class TaskQueue:
     
     def _retry_monitor(self):
         while True:
-            time.slep(1)
+            time.sleep(1)
             with self.lock:
                 now = datetime.now().isoformat()
                 self.cursor.execute('''
                         SELECT id FROM task_list
                         WHERE state = 'failed'
-                        AND next_attempt_at <= ?
+                        AND (next_attempt_at IS NULL OR next_attempt_at <= ?)
                     ''', (now,))
                 rows = self.cursor.fetchall()
                 if rows:
